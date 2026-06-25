@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+:root {
+  --bg-void: #08080a;
+  --bg-surface: #111114;
+  --bg-raised: #19191e;
+  --border-subtle: #1e1e24;
+  --border-default: #2a2a32;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-glow: rgba(124, 58, 237, 0.15);
+  --amber: #c4943d;
+  --text-primary: #e8e8ed;
+  --text-secondary: #6b6b76;
+  --text-tertiary: #4a4a54;
+  --flag-red: #dc2626;
+  --flag-yellow: #d97706;
+  --flag-green: #16a34a;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-background: var(--bg-void);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Film strip separator between episodes */
+.film-strip {
+  position: relative;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 2rem 0;
+}
+
+.film-strip::before,
+.film-strip::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-void);
+}
+
+.film-strip::before {
+  left: 0;
+}
+
+.film-strip::after {
+  right: 0;
+}
+
+/* Generate button idle glow */
+@keyframes gentle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px var(--accent-glow);
+  }
+}
+
+/* Continuity flag hero glow */
+@keyframes flag-glow {
+  0%, 100% {
+    box-shadow: inset 0 0 0 1px var(--flag-red), 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 0 1px var(--flag-red), 0 0 16px 0 rgba(220, 38, 38, 0.12);
+  }
+}
+
+/* Progress bar for generation */
+@keyframes writing-bar {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Episode card entrance */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in for expanding content */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Skeleton shimmer sweep */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--border-subtle) 25%,
+    var(--border-default) 50%,
+    var(--border-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Episode card entrance utility */
+.episode-enter {
+  animation: card-enter 400ms var(--ease-out-expo) both;
+}
+
+/* Flag details entrance */
+.flag-details-enter {
+  animation: fade-in 200ms var(--ease-out-quart) both;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  transition: background 150ms;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
