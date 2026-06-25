@@ -4,6 +4,7 @@ node_modules/
 # environment / secrets
 .env
 .env.*
+!.env.example
 
 # Next.js
 .next/
