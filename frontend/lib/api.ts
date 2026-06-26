@@ -116,6 +116,14 @@ export async function addThread(showId: number, data: Record<string, any>) {
   return res.json();
 }
 
+export async function deleteEpisode(episodeId: number) {
+  const res = await fetch(`${API}/episodes/${episodeId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete episode');
+  return res.json();
+}
+
 export async function updateEpisode(episodeId: number, data: Record<string, any>) {
   const res = await fetch(`${API}/episodes/${episodeId}`, {
     method: 'PATCH',

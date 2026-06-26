@@ -100,6 +100,18 @@ router.patch('/episodes/:id', async (req, res) => {
   }
 });
 
+// Delete a single episode
+router.delete('/episodes/:id', async (req, res) => {
+  try {
+    const episodeId = parseInt(req.params.id);
+    await pool.query('DELETE FROM continuity_flags WHERE episode_id = $1', [episodeId]);
+    await pool.query('DELETE FROM episodes WHERE id = $1', [episodeId]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete all episodes for a show (reset)
 router.delete('/shows/:id/episodes', async (req, res) => {
   try {

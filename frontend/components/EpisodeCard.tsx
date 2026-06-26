@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ContinuityFlagBadge from './ContinuityFlagBadge';
-import { updateEpisode } from '../lib/api';
+import { updateEpisode, deleteEpisode } from '../lib/api';
 
 interface Shot {
   shot: number;
@@ -44,9 +44,22 @@ export default function EpisodeCard({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [scriptDraft, setScriptDraft] = useState(episode.script);
   const [briefDraft, setBriefDraft] = useState(episode.director_brief);
   const [shotsDraft, setShotsDraft] = useState<Shot[]>(shots);
+
+  async function handleDelete() {
+    if (!confirm(`Delete Episode ${episode.episode_number}? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteEpisode(episode.id);
+      onUpdated?.();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setDeleting(false);
+    }
+  }
 
   function startEdit() {
     setScriptDraft(episode.script);
@@ -104,12 +117,21 @@ export default function EpisodeCard({
           </h3>
         </div>
         {!editing && (
-          <button
-            onClick={startEdit}
-            className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] tracking-wide uppercase transition-colors duration-150"
-          >
-            Edit
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={startEdit}
+              className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] tracking-wide uppercase transition-colors duration-150"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-xs text-[var(--text-tertiary)] hover:text-[var(--flag-red)] tracking-wide uppercase transition-colors duration-150 disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         )}
       </div>
 
