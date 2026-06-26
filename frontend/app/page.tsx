@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getShows, createShow } from '../lib/api';
+import { getShows, createShow, suggestShow, addCharacter, addThread } from '../lib/api';
 
 export default function Home() {
   const router = useRouter();
@@ -10,7 +10,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: '', genre: '', tone: '', premise: '' });
+  const [suggestedChars, setSuggestedChars] = useState<any[]>([]);
+  const [suggestedThreads, setSuggestedThreads] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -21,16 +24,48 @@ export default function Home() {
     });
   }, []);
 
+  async function handleSuggest() {
+    setSuggesting(true);
+    try {
+      const suggestion = await suggestShow();
+      setForm({
+        title: suggestion.title || '',
+        genre: suggestion.genre || '',
+        tone: suggestion.tone || '',
+        premise: suggestion.premise || '',
+      });
+      setSuggestedChars(suggestion.characters || []);
+      setSuggestedThreads(suggestion.threads || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
   async function handleCreate() {
     if (!form.title.trim() || !form.genre.trim() || !form.tone.trim() || !form.premise.trim()) return;
     setSaving(true);
     try {
       const show = await createShow(form);
+      for (const char of suggestedChars) {
+        await addCharacter(show.id, { name: char.name, traits: char.traits || [], arc_status: char.arc_status || 'emerging' });
+      }
+      for (const thread of suggestedThreads) {
+        await addThread(show.id, { description: thread.description, status: thread.status || 'open' });
+      }
       router.push(`/shows/${show.id}`);
     } catch (err) {
       console.error(err);
       setSaving(false);
     }
+  }
+
+  function clearForm() {
+    setCreating(false);
+    setForm({ title: '', genre: '', tone: '', premise: '' });
+    setSuggestedChars([]);
+    setSuggestedThreads([]);
   }
 
   const inputClass =
@@ -69,9 +104,28 @@ export default function Home() {
 
         {creating && (
           <div className="border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">
-              Create New Show
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">
+                Create New Show
+              </h3>
+              <button
+                onClick={handleSuggest}
+                disabled={suggesting}
+                className="text-xs px-3 py-1 border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition-colors tracking-wide uppercase disabled:opacity-50"
+              >
+                {suggesting ? 'Thinking...' : 'Suggest with AI'}
+              </button>
+            </div>
+
+            {suggesting && (
+              <div className="flex items-center gap-2 py-3">
+                <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Qwen is pitching you a series concept...
+                </span>
+              </div>
+            )}
+
             <input
               className={inputClass}
               placeholder="Title (e.g. The Lagos Chronicles)"
@@ -99,7 +153,60 @@ export default function Home() {
               value={form.premise}
               onChange={(e) => setForm((f) => ({ ...f, premise: e.target.value }))}
             />
-            <div className="flex items-center gap-3">
+
+            {suggestedChars.length > 0 && (
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-2 font-medium">
+                  Suggested Characters
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {suggestedChars.map((char, i) => (
+                    <div key={i} className="border border-[var(--border-subtle)] bg-[var(--bg-void)] p-2.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium text-[var(--text-primary)]">{char.name}</span>
+                        <button
+                          onClick={() => setSuggestedChars((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="text-[var(--text-tertiary)] hover:text-[var(--flag-red)] text-xs"
+                        >
+                          &#10005;
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(char.traits || []).map((trait: string, j: number) => (
+                          <span key={j} className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-raised)] text-[var(--text-secondary)] border border-[var(--border-default)]">
+                            {trait}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {suggestedThreads.length > 0 && (
+              <div>
+                <h4 className="text-[10px] uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-2 font-medium">
+                  Suggested Plot Threads
+                </h4>
+                <ul className="space-y-1.5">
+                  {suggestedThreads.map((thread, i) => (
+                    <li key={i} className="text-sm text-[var(--text-secondary)] flex items-start gap-2">
+                      <span className="text-[var(--amber)] mt-0.5">&#9670;</span>
+                      <span className="flex-1">{thread.description}</span>
+                      <button
+                        onClick={() => setSuggestedThreads((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-[var(--text-tertiary)] hover:text-[var(--flag-red)] text-xs shrink-0"
+                      >
+                        &#10005;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-1">
               <button
                 onClick={handleCreate}
                 disabled={saving}
@@ -108,7 +215,7 @@ export default function Home() {
                 {saving ? 'Creating...' : 'Create Show'}
               </button>
               <button
-                onClick={() => { setCreating(false); setForm({ title: '', genre: '', tone: '', premise: '' }); }}
+                onClick={clearForm}
                 className="text-xs px-4 py-1.5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
               >
                 Cancel

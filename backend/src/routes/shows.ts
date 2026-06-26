@@ -13,6 +13,61 @@ router.get('/shows', async (req, res) => {
   }
 });
 
+router.get('/shows/suggest', async (req, res) => {
+  try {
+    const endpoint = process.env.QWEN_ENDPOINT!;
+    const apiKey = process.env.QWEN_API_KEY!;
+
+    const systemPrompt = `You are a creative showrunner who pitches original TV series concepts.
+Generate a unique, compelling series concept. Be specific and creative — avoid generic ideas.
+Draw from diverse settings, cultures, time periods, and genres.
+
+Respond ONLY as valid JSON. No markdown. No backticks. No explanation.
+{
+  "title": "series title",
+  "genre": "one word genre",
+  "tone": "2-3 word tone description",
+  "premise": "1-2 sentence premise",
+  "characters": [
+    {"name": "character name", "traits": ["trait1", "trait2"], "arc_status": "emerging"},
+    {"name": "character name", "traits": ["trait1", "trait2"], "arc_status": "emerging"}
+  ],
+  "threads": [
+    {"description": "an open plot thread", "status": "open"}
+  ]
+}`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'qwen-max',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Pitch me a fresh, original series concept.' },
+        ],
+        temperature: 1.0,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Qwen API error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json() as any;
+    let content: string = data.choices[0].message.content;
+    content = content.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+    res.json(JSON.parse(content));
+  } catch (err: any) {
+    console.error('[suggest] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/shows', async (req, res) => {
   try {
     const { title, genre, tone, premise } = req.body;

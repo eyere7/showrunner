@@ -6,6 +6,12 @@ export async function getShows() {
   return res.json();
 }
 
+export async function suggestShow() {
+  const res = await fetch(`${API}/shows/suggest`);
+  if (!res.ok) throw new Error('Failed to get suggestion');
+  return res.json();
+}
+
 export async function createShow(data: { title: string; genre: string; tone: string; premise: string }) {
   const res = await fetch(`${API}/shows`, {
     method: 'POST',
