@@ -101,6 +101,12 @@ export default function ShowDashboard() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/?new=1')}
+            className="text-xs px-3 py-1 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors tracking-wide uppercase"
+          >
+            + New Series
+          </button>
           {episodes.length > 0 && (
             <button
               onClick={handleReset}

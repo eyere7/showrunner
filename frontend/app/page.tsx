@@ -13,6 +13,8 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('new') === '1') setCreating(true);
     getShows().then((data) => {
       setShows(data);
       setLoading(false);
@@ -75,6 +77,7 @@ export default function Home() {
               placeholder="Title (e.g. The Lagos Chronicles)"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              autoFocus
             />
             <div className="grid grid-cols-2 gap-3">
               <input
