@@ -5,9 +5,11 @@ export async function checkContinuity(packet: any, newEpisode: any) {
   const endpoint = process.env.QWEN_ENDPOINT!;
   const apiKey = process.env.QWEN_API_KEY!;
 
-  const systemPrompt = `You are a continuity editor. Compare the new episode script against the show bible below.
+  const systemPrompt = `You are a continuity editor. Compare the new episode content (script, director brief, and shot list) against the show bible below.
 Find any contradictions:
-- Character acting against their established traits
+- Character acting against their established traits or personality
+- Character behavior in the script contradicting their defined traits
+- Director brief or shot list inconsistent with the script or character traits
 - Facts from previous episodes being ignored or reversed
 - Open plot threads dropped without acknowledgement
 - Tone inconsistent with the show's established tone
@@ -17,7 +19,13 @@ Return ONLY a valid JSON array. No markdown. No explanation:
 
 If NO contradictions: return exactly []`;
 
-  const userMessage = `Bible: ${JSON.stringify(packet)}\n\nNew episode: ${newEpisode.script}`;
+  const episodeContent = [
+    `Script:\n${newEpisode.script}`,
+    newEpisode.director_brief ? `\nDirector Brief:\n${newEpisode.director_brief}` : '',
+    newEpisode.shot_list ? `\nShot List:\n${JSON.stringify(newEpisode.shot_list)}` : '',
+  ].join('');
+
+  const userMessage = `Bible: ${JSON.stringify(packet)}\n\nNew episode content:\n${episodeContent}`;
 
   const response = await fetch(endpoint, {
     method: 'POST',

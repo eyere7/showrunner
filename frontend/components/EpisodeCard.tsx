@@ -43,6 +43,7 @@ export default function EpisodeCard({
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const [scriptDraft, setScriptDraft] = useState(episode.script);
   const [briefDraft, setBriefDraft] = useState(episode.director_brief);
   const [shotsDraft, setShotsDraft] = useState<Shot[]>(shots);
@@ -66,14 +67,18 @@ export default function EpisodeCard({
       if (briefDraft !== episode.director_brief) updates.director_brief = briefDraft;
       if (JSON.stringify(shotsDraft) !== JSON.stringify(shots)) updates.shot_list = shotsDraft;
       if (Object.keys(updates).length > 0) {
+        setEditing(false);
+        setRechecking(true);
         await updateEpisode(episode.id, updates);
+      } else {
+        setEditing(false);
       }
-      setEditing(false);
       onUpdated?.();
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
       setSaving(false);
+      setRechecking(false);
     }
   }
 
@@ -214,7 +219,7 @@ export default function EpisodeCard({
             disabled={saving}
             className="text-xs px-4 py-1.5 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? 'Saving & Checking...' : 'Save Changes'}
           </button>
           <button
             onClick={cancelEdit}
@@ -225,7 +230,16 @@ export default function EpisodeCard({
         </div>
       )}
 
-      <ContinuityFlagBadge flags={flags} />
+      {rechecking ? (
+        <div className="flex items-center gap-2 py-2">
+          <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[var(--text-secondary)]">
+            Rechecking continuity...
+          </span>
+        </div>
+      ) : (
+        <ContinuityFlagBadge flags={flags} />
+      )}
     </div>
   );
 }

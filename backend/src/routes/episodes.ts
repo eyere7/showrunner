@@ -60,7 +60,7 @@ router.get('/shows/:id/episodes', async (req, res) => {
   }
 });
 
-// Update an episode
+// Update an episode and re-check continuity
 router.patch('/episodes/:id', async (req, res) => {
   try {
     const episodeId = parseInt(req.params.id);
@@ -77,7 +77,24 @@ router.patch('/episodes/:id', async (req, res) => {
       `UPDATE episodes SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
       values
     );
-    res.json(result.rows[0]);
+    const updatedEpisode = result.rows[0];
+
+    // Re-run continuity check against the show bible
+    await pool.query('DELETE FROM continuity_flags WHERE episode_id = $1', [episodeId]);
+    const packet = await buildContextPacket(updatedEpisode.show_id);
+    const flags = await checkContinuity(packet, {
+      script: updatedEpisode.script,
+      shot_list: updatedEpisode.shot_list,
+      director_brief: updatedEpisode.director_brief,
+    });
+    for (const flag of flags) {
+      await pool.query(
+        'INSERT INTO continuity_flags (episode_id, flag_type, description, severity) VALUES ($1, $2, $3, $4)',
+        [episodeId, flag.type, flag.description, flag.severity]
+      );
+    }
+
+    res.json({ episode: updatedEpisode, flags });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
