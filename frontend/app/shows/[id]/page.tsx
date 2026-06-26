@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import { getShowBible, getEpisodes, getFlags } from '../../../lib/api';
+import { useParams, useRouter } from 'next/navigation';
+import { getShowBible, getEpisodes, getFlags, resetEpisodes } from '../../../lib/api';
 import ShowBible from '../../../components/ShowBible';
 import EpisodeCard from '../../../components/EpisodeCard';
 import EpisodeCardSkeleton from '../../../components/EpisodeCardSkeleton';
@@ -10,6 +10,7 @@ import GenerateEpisodeButton from '../../../components/GenerateEpisodeButton';
 
 export default function ShowDashboard() {
   const params = useParams();
+  const router = useRouter();
   const showId = Number(params.id);
 
   const [bible, setBible] = useState<any>(null);
@@ -17,6 +18,7 @@ export default function ShowDashboard() {
   const [episodeFlags, setEpisodeFlags] = useState<Record<number, any[]>>({});
   const [generating, setGenerating] = useState(false);
   const [newEpisodeId, setNewEpisodeId] = useState<number | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   const loadData = useCallback(async () => {
     const [bibleData, episodesData] = await Promise.all([
@@ -39,6 +41,20 @@ export default function ShowDashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  async function handleReset() {
+    if (!confirm('Delete all episodes and start fresh? This cannot be undone.')) return;
+    setResetting(true);
+    try {
+      await resetEpisodes(showId);
+      setEpisodes([]);
+      setEpisodeFlags({});
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setResetting(false);
+    }
+  }
 
   function handleGenerating() {
     setGenerating(true);
@@ -73,17 +89,31 @@ export default function ShowDashboard() {
     <div className="min-h-screen bg-[var(--bg-void)]">
       <header className="border-b border-[var(--border-subtle)] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold tracking-[0.2em] uppercase text-[var(--text-primary)]">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm font-semibold tracking-[0.2em] uppercase text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+          >
             Showrunner
-          </h1>
+          </button>
           <span className="text-[var(--text-tertiary)]">/</span>
           <span className="text-sm text-[var(--text-secondary)]">
             {bible.show.title}
           </span>
         </div>
-        <span className="text-xs text-[var(--text-tertiary)] font-mono">
-          {episodes.length} episode{episodes.length !== 1 ? 's' : ''}
-        </span>
+        <div className="flex items-center gap-4">
+          {episodes.length > 0 && (
+            <button
+              onClick={handleReset}
+              disabled={resetting}
+              className="text-xs text-[var(--text-tertiary)] hover:text-[var(--flag-red)] transition-colors tracking-wide uppercase disabled:opacity-50"
+            >
+              {resetting ? 'Resetting...' : 'Reset Episodes'}
+            </button>
+          )}
+          <span className="text-xs text-[var(--text-tertiary)] font-mono">
+            {episodes.length} episode{episodes.length !== 1 ? 's' : ''}
+          </span>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">

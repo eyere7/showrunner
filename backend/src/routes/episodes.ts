@@ -83,6 +83,21 @@ router.patch('/episodes/:id', async (req, res) => {
   }
 });
 
+// Delete all episodes for a show (reset)
+router.delete('/shows/:id/episodes', async (req, res) => {
+  try {
+    const showId = parseInt(req.params.id);
+    await pool.query(
+      'DELETE FROM continuity_flags WHERE episode_id IN (SELECT id FROM episodes WHERE show_id = $1)',
+      [showId]
+    );
+    await pool.query('DELETE FROM episodes WHERE show_id = $1', [showId]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get flags for an episode
 router.get('/episodes/:id/flags', async (req, res) => {
   try {

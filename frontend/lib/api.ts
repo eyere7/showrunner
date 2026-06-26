@@ -1,5 +1,29 @@
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export async function getShows() {
+  const res = await fetch(`${API}/shows`);
+  if (!res.ok) throw new Error('Failed to fetch shows');
+  return res.json();
+}
+
+export async function createShow(data: { title: string; genre: string; tone: string; premise: string }) {
+  const res = await fetch(`${API}/shows`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create show');
+  return res.json();
+}
+
+export async function resetEpisodes(showId: number) {
+  const res = await fetch(`${API}/shows/${showId}/episodes`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to reset episodes');
+  return res.json();
+}
+
 export async function getShowBible(showId: number) {
   const res = await fetch(`${API}/shows/${showId}/bible`);
   if (!res.ok) throw new Error('Failed to fetch show bible');

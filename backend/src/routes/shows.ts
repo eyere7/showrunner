@@ -4,6 +4,15 @@ import { buildContextPacket } from '../services/contextPacket';
 
 const router = Router();
 
+router.get('/shows', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM shows ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/shows', async (req, res) => {
   try {
     const { title, genre, tone, premise } = req.body;
