@@ -87,7 +87,7 @@ export default function ShowDashboard() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        <ShowBible bible={bible} />
+        <ShowBible bible={bible} onUpdated={loadData} />
 
         <GenerateEpisodeButton
           showId={showId}
@@ -115,6 +115,7 @@ export default function ShowDashboard() {
                   <EpisodeCard
                     episode={ep}
                     flags={episodeFlags[ep.id] || []}
+                    onUpdated={loadData}
                   />
                 </div>
               </div>

@@ -60,6 +60,29 @@ router.get('/shows/:id/episodes', async (req, res) => {
   }
 });
 
+// Update an episode
+router.patch('/episodes/:id', async (req, res) => {
+  try {
+    const episodeId = parseInt(req.params.id);
+    const { script, director_brief, shot_list } = req.body;
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+    if (script !== undefined) { fields.push(`script = $${idx++}`); values.push(script); }
+    if (director_brief !== undefined) { fields.push(`director_brief = $${idx++}`); values.push(director_brief); }
+    if (shot_list !== undefined) { fields.push(`shot_list = $${idx++}`); values.push(JSON.stringify(shot_list)); }
+    if (fields.length === 0) { res.status(400).json({ error: 'No fields to update' }); return; }
+    values.push(episodeId);
+    const result = await pool.query(
+      `UPDATE episodes SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get flags for an episode
 router.get('/episodes/:id/flags', async (req, res) => {
   try {
