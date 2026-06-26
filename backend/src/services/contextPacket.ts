@@ -11,17 +11,19 @@ export async function buildContextPacket(showId: number) {
   const threadsResult = await pool.query("SELECT description, status FROM plot_threads WHERE show_id = $1 AND status = 'open'", [showId]);
   const threads = threadsResult.rows;
 
-  const lastEpResult = await pool.query('SELECT * FROM episodes WHERE show_id = $1 ORDER BY episode_number DESC LIMIT 1', [showId]);
-  const lastEp = lastEpResult.rows[0];
+  const allEpsResult = await pool.query('SELECT episode_number, script FROM episodes WHERE show_id = $1 ORDER BY episode_number ASC', [showId]);
+  const allEpisodes = allEpsResult.rows;
 
-  let lastEpSummary: string;
+  let episodeHistory: string;
   let nextEpNum: number;
 
-  if (lastEp) {
-    lastEpSummary = (lastEp.script || '').substring(0, 300);
-    nextEpNum = lastEp.episode_number + 1;
+  if (allEpisodes.length > 0) {
+    episodeHistory = allEpisodes
+      .map((ep: any) => `Episode ${ep.episode_number}: ${(ep.script || '').substring(0, 120).replace(/\n/g, ' ')}...`)
+      .join('\n');
+    nextEpNum = allEpisodes[allEpisodes.length - 1].episode_number + 1;
   } else {
-    lastEpSummary = 'This is episode 1 — no previous episodes.';
+    episodeHistory = 'No previous episodes. This is the series premiere.';
     nextEpNum = 1;
   }
 
@@ -29,7 +31,7 @@ export async function buildContextPacket(showId: number) {
     show: { title: show.title, genre: show.genre, tone: show.tone, premise: show.premise },
     characters,
     threads,
-    lastEpSummary,
+    episodeHistory,
     nextEpNum,
   };
 

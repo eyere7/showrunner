@@ -22,9 +22,17 @@ ${characterBlock}
 Open plot threads:
 ${threadBlock}
 
-Previous episode: ${packet.lastEpSummary}
+Episode history so far:
+${packet.episodeHistory}
 
-Write a 60-90 second episodic script that stays CONSISTENT with every character trait listed above and advances at least one open plot thread.
+CRITICAL RULES:
+- Do NOT repeat any scene, setting, or opening from previous episodes. Each episode MUST open in a DIFFERENT location with NEW dramatic circumstances.
+- Advance the story meaningfully — introduce new conflicts, reveal secrets, shift alliances, or escalate stakes.
+- Stay CONSISTENT with every character trait listed above.
+- Advance at least one open plot thread.
+- Vary the structure: not every episode needs to be a two-person conversation. Use different character combinations, locations (offices, markets, homes, vehicles, rooftops), and dramatic situations.
+
+Write a 60-90 second episodic script.
 
 Respond ONLY as valid JSON. No markdown. No backticks. No explanation before or after.
 {
@@ -45,7 +53,7 @@ Respond ONLY as valid JSON. No markdown. No backticks. No explanation before or 
         { role: 'system', content: systemPrompt },
         { role: 'user', content: 'Generate the next episode.' },
       ],
-      temperature: 0.8,
+      temperature: 0.9,
     }),
   });
 
