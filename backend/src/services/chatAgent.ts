@@ -35,9 +35,12 @@ export async function chatWithAgent(
     ? `Episode ${lastEp.rows[0].episode_number}: ${(lastEp.rows[0].script || '').substring(0, 200).replace(/\n/g, ' ')}...`
     : 'No episodes written yet.';
 
-  const systemPrompt = `You are the Showrunner Memory Agent for '${packet.show.title}'. You have persistent memory of this show stored in a database.
+  // Build global memory from all shows
+  const globalMemory = await buildGlobalMemory(showId);
 
-Your memory contains:
+  const systemPrompt = `You are the Showrunner Memory Agent. You have persistent memory of ALL shows stored in a database. You are currently viewing '${packet.show.title}'.
+
+=== CURRENT SHOW: ${packet.show.title} ===
 Characters:
 ${charactersBlock || '(none yet)'}
 
@@ -52,14 +55,19 @@ Show details:
 - Tone: ${packet.show.tone}
 - Premise: ${packet.show.premise}
 
-Answer any question the user asks about this show using your memory. If asked about a character, thread, or past episode — recall it accurately. If the user wants to UPDATE something in memory (e.g. change a character trait, update arc status), confirm what you are updating and tell them it has been saved.
+=== GLOBAL MEMORY (all other shows) ===
+${globalMemory || '(no other shows in memory)'}
+
+Answer any question the user asks using your memory. You can recall information from ANY show in your database, not just the current one. If asked about a character, thread, or past episode from any show — recall it accurately. If the user wants to UPDATE something in memory (e.g. change a character trait, update arc status), confirm what you are updating and tell them it has been saved.
 
 When the user asks to update something, respond with a JSON action block at the END of your reply on its own line, in this exact format:
-%%%ACTION:{"type":"update_character","name":"CharName","fields":{"arc_status":"resolved"}}%%%
-%%%ACTION:{"type":"update_character","name":"CharName","fields":{"traits":["trait1","trait2"]}}%%%
-%%%ACTION:{"type":"update_thread","description":"thread text","fields":{"status":"resolved"}}%%%
+%%%ACTION:{"type":"update_character","name":"CharName","show":"ShowTitle","fields":{"arc_status":"resolved"}}%%%
+%%%ACTION:{"type":"update_character","name":"CharName","show":"ShowTitle","fields":{"traits":["trait1","trait2"]}}%%%
+%%%ACTION:{"type":"update_thread","description":"thread text","show":"ShowTitle","fields":{"status":"resolved"}}%%%
 
-Always reference your memory explicitly in answers — say "From my memory of this show..." or "I recall that..." to demonstrate active recall.`;
+If no "show" field is provided, it defaults to the current show.
+
+Always reference your memory explicitly in answers — say "From my memory..." or "I recall that..." to demonstrate active recall. When answering about a different show, name the show explicitly.`;
 
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -106,7 +114,18 @@ Always reference your memory explicitly in answers — say "From my memory of th
   return reply;
 }
 
-async function executeAction(showId: number, action: any) {
+async function resolveShowId(currentShowId: number, action: any): Promise<number> {
+  if (!action.show) return currentShowId;
+  const result = await pool.query(
+    'SELECT id FROM shows WHERE LOWER(title) = LOWER($1)',
+    [action.show]
+  );
+  return result.rows.length > 0 ? result.rows[0].id : currentShowId;
+}
+
+async function executeAction(currentShowId: number, action: any) {
+  const showId = await resolveShowId(currentShowId, action);
+
   if (action.type === 'update_character') {
     const charResult = await pool.query(
       'SELECT id FROM characters WHERE show_id = $1 AND LOWER(name) = LOWER($2)',
@@ -124,7 +143,7 @@ async function executeAction(showId: number, action: any) {
     if (fields.name) {
       await pool.query('UPDATE characters SET name = $1 WHERE id = $2', [fields.name, charId]);
     }
-    console.log(`[chatAgent] Updated character ${action.name}:`, fields);
+    console.log(`[chatAgent] Updated character ${action.name} (show ${showId}):`, fields);
   } else if (action.type === 'update_thread') {
     const threadResult = await pool.query(
       'SELECT id FROM plot_threads WHERE show_id = $1 AND LOWER(description) LIKE LOWER($2)',
@@ -135,6 +154,37 @@ async function executeAction(showId: number, action: any) {
     if (action.fields.status) {
       await pool.query('UPDATE plot_threads SET status = $1 WHERE id = $2', [action.fields.status, threadId]);
     }
-    console.log(`[chatAgent] Updated thread:`, action.fields);
+    console.log(`[chatAgent] Updated thread (show ${showId}):`, action.fields);
   }
+}
+
+async function buildGlobalMemory(currentShowId: number): Promise<string> {
+  const shows = await pool.query('SELECT * FROM shows WHERE id != $1 ORDER BY created_at DESC', [currentShowId]);
+  if (shows.rows.length === 0) return '';
+
+  const blocks: string[] = [];
+
+  for (const show of shows.rows) {
+    const chars = await pool.query('SELECT name, traits, arc_status FROM characters WHERE show_id = $1', [show.id]);
+    const threads = await pool.query('SELECT description, status FROM plot_threads WHERE show_id = $1', [show.id]);
+    const epCount = await pool.query('SELECT COUNT(*) FROM episodes WHERE show_id = $1', [show.id]);
+
+    const charLines = chars.rows
+      .map((c: any) => `  - ${c.name} [traits: ${(c.traits || []).join(', ')}] [arc: ${c.arc_status}]`)
+      .join('\n');
+
+    const threadLines = threads.rows
+      .map((t: any) => `  - ${t.description} (${t.status})`)
+      .join('\n');
+
+    blocks.push(
+      `Show: "${show.title}" (${show.genre}, ${show.tone})\n` +
+      `  Premise: ${show.premise}\n` +
+      `  Episodes: ${epCount.rows[0].count}\n` +
+      `  Characters:\n${charLines || '  (none)'}\n` +
+      `  Threads:\n${threadLines || '  (none)'}`
+    );
+  }
+
+  return blocks.join('\n\n');
 }
