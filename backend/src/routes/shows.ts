@@ -18,7 +18,7 @@ router.get('/shows/suggest', async (req, res) => {
     const endpoint = process.env.QWEN_ENDPOINT!;
     const apiKey = process.env.QWEN_API_KEY!;
 
-    const systemPrompt = `You are a creative showrunner who pitches original TV series concepts.
+    const systemPrompt = `You are a creative TV writer who pitches original TV series concepts.
 Generate a unique, compelling series concept. Be specific and creative — avoid generic ideas.
 Draw from diverse settings, cultures, time periods, and genres.
 

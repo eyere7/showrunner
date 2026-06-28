@@ -38,7 +38,7 @@ export async function chatWithAgent(
   // Build global memory from all shows
   const globalMemory = await buildGlobalMemory(showId);
 
-  const systemPrompt = `You are the Showrunner Memory Agent. You have persistent memory of ALL shows stored in a database. You are currently viewing '${packet.show.title}'.
+  const systemPrompt = `You are the DTSCRIPT Memory Agent. You have persistent memory of ALL shows stored in a database. You are currently viewing '${packet.show.title}'.
 
 === CURRENT SHOW: ${packet.show.title} ===
 Characters:

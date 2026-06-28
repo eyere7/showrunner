@@ -13,7 +13,7 @@ export async function generateEpisode(packet: any) {
     .map((t: any, i: number) => `${i + 1}. ${t.description}`)
     .join('\n');
 
-  const systemPrompt = `You are a professional showrunner writing episode ${packet.nextEpNum} of '${packet.show.title}'.
+  const systemPrompt = `You are a professional TV writer writing episode ${packet.nextEpNum} of '${packet.show.title}'.
 Genre: ${packet.show.genre}. Tone: ${packet.show.tone}. Premise: ${packet.show.premise}.
 
 Characters:

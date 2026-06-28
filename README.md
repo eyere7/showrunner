@@ -1,4 +1,4 @@
-# Showrunner
+# DTSCRIPT
 
 **AI that remembers.** An AI writers' room that generates episodic content while maintaining persistent memory of characters, world rules, and plot threads across every episode.
 
@@ -6,7 +6,7 @@ Built for the [Qwen Cloud AI Hackathon](https://qwencloud.devpost.com/) — dead
 
 ## What it does
 
-Showrunner writes production-ready episodes (script + shot list + director brief) using a **two-call Qwen architecture**:
+DTSCRIPT writes production-ready episodes (script + shot list + director brief) using a **two-call Qwen architecture**:
 
 1. **Context Packet** — Before every generation, the app builds a structured memory packet from the database: show bible, character traits, open plot threads, and a summary of the last episode.
 2. **Qwen Call 1 (Write)** — Sends the context packet to `qwen-max`. Returns a full episode as structured JSON: script, shot list with framing types, and a director brief.
@@ -29,7 +29,7 @@ User → Context Packet → Qwen (write) → Qwen (check) → Postgres → Dashb
 ## Project structure
 
 ```
-showrunner/
+dtscript/
 ├── backend/
 │   └── src/
 │       ├── db/           # schema.sql, pool.ts
@@ -54,8 +54,8 @@ showrunner/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/eyere7/showrunner.git
-cd showrunner
+git clone https://github.com/eyere7/dtscript.git
+cd dtscript
 
 cd backend && npm install
 cd ../frontend && npm install
@@ -65,16 +65,16 @@ cd ../frontend && npm install
 
 ```bash
 psql -U postgres
-CREATE DATABASE showrunner;
+CREATE DATABASE dtscript;
 \q
 
-psql -U postgres -d showrunner -f backend/src/db/schema.sql
+psql -U postgres -d dtscript -f backend/src/db/schema.sql
 ```
 
 ### 3. Seed demo data
 
 ```sql
-psql -U postgres -d showrunner
+psql -U postgres -d dtscript
 
 INSERT INTO shows (title, genre, tone, premise)
 VALUES ('The Lagos Chronicles', 'drama', 'gritty and real',
@@ -98,7 +98,7 @@ cp backend/.env.example backend/.env
 Edit `backend/.env`:
 
 ```
-DATABASE_URL=postgresql://youruser@localhost:5432/showrunner
+DATABASE_URL=postgresql://youruser@localhost:5432/dtscript
 QWEN_API_KEY=your_key_here
 QWEN_ENDPOINT=https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions
 PORT=4000
@@ -128,6 +128,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | POST | `/shows/:id/episodes/generate` | Generate next episode |
 | GET | `/shows/:id/episodes` | List all episodes |
 | GET | `/episodes/:id/flags` | Continuity flags for episode |
+| POST | `/shows/:id/chat` | Send message to Memory Agent |
+| GET | `/shows/:id/chat/history` | Chat history for a show |
 
 ## The continuity engine
 

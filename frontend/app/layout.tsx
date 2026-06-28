@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Showrunner",
+  title: "DTSCRIPT",
   description: "AI Writers' Room with Persistent Memory",
 };
 

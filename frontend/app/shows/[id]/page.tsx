@@ -95,7 +95,7 @@ export default function ShowDashboard() {
             onClick={() => router.push('/')}
             className="text-sm font-semibold tracking-[0.2em] uppercase text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
           >
-            Showrunner
+            DTSCRIPT
           </button>
           <span className="text-[var(--text-tertiary)]">/</span>
           <span className="text-sm text-[var(--text-secondary)]">
