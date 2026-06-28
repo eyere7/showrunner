@@ -22,5 +22,5 @@ app.get('/health', (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`DTSCRIPT backend running on port ${PORT}`);
+  console.log(`DTLIBRARY'S backend running on port ${PORT}`);
 });

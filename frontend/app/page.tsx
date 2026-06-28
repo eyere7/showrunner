@@ -83,7 +83,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--bg-void)]">
       <header className="border-b border-[var(--border-subtle)] px-6 py-4">
         <h1 className="text-sm font-semibold tracking-[0.2em] uppercase text-[var(--text-primary)]">
-          DTSCRIPT
+          DTLIBRARY'S
         </h1>
       </header>
 
