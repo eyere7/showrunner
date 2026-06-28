@@ -7,6 +7,7 @@ import ShowBible from '../../../components/ShowBible';
 import EpisodeCard from '../../../components/EpisodeCard';
 import EpisodeCardSkeleton from '../../../components/EpisodeCardSkeleton';
 import GenerateEpisodeButton from '../../../components/GenerateEpisodeButton';
+import MemoryChat from '../../../components/MemoryChat';
 
 export default function ShowDashboard() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function ShowDashboard() {
   const [generating, setGenerating] = useState(false);
   const [newEpisodeId, setNewEpisodeId] = useState<number | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'episodes' | 'chat'>('episodes');
 
   const loadData = useCallback(async () => {
     const [bibleData, episodesData] = await Promise.all([
@@ -86,8 +88,8 @@ export default function ShowDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-void)]">
-      <header className="border-b border-[var(--border-subtle)] px-6 py-4 flex items-center justify-between">
+    <div className="h-screen bg-[var(--bg-void)] flex flex-col">
+      <header className="border-b border-[var(--border-subtle)] px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
@@ -122,43 +124,77 @@ export default function ShowDashboard() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        <ShowBible bible={bible} onUpdated={loadData} />
+      {/* Mobile tab switcher */}
+      <div className="flex lg:hidden border-b border-[var(--border-subtle)]">
+        <button
+          onClick={() => setMobileTab('episodes')}
+          className={`flex-1 text-xs py-2.5 tracking-wide uppercase transition-colors ${
+            mobileTab === 'episodes'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)]'
+              : 'text-[var(--text-tertiary)]'
+          }`}
+        >
+          Episodes
+        </button>
+        <button
+          onClick={() => setMobileTab('chat')}
+          className={`flex-1 text-xs py-2.5 tracking-wide uppercase transition-colors ${
+            mobileTab === 'chat'
+              ? 'text-[var(--accent)] border-b-2 border-[var(--accent)]'
+              : 'text-[var(--text-tertiary)]'
+          }`}
+        >
+          🧠 Memory Agent
+        </button>
+      </div>
 
-        <GenerateEpisodeButton
-          showId={showId}
-          onGenerating={handleGenerating}
-          onGenerated={handleGenerated}
-        />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Episodes panel */}
+        <main className={`flex-1 overflow-y-auto px-4 py-8 ${mobileTab !== 'episodes' ? 'hidden lg:block' : ''}`}>
+          <div className="max-w-4xl mx-auto space-y-8">
+            <ShowBible bible={bible} onUpdated={loadData} />
 
-        {generating && <EpisodeCardSkeleton />}
+            <GenerateEpisodeButton
+              showId={showId}
+              onGenerating={handleGenerating}
+              onGenerated={handleGenerated}
+            />
 
-        {sortedEpisodes.length === 0 && !generating ? (
-          <div className="text-center py-20">
-            <p className="text-[var(--text-secondary)] text-lg mb-2">
-              No episodes yet
-            </p>
-            <p className="text-[var(--text-tertiary)] text-sm">
-              Generate above to write the first one
-            </p>
-          </div>
-        ) : (
-          <div>
-            {sortedEpisodes.map((ep, i) => (
-              <div key={ep.id}>
-                {i > 0 && <div className="film-strip" />}
-                <div className={ep.id === newEpisodeId ? 'episode-enter' : ''}>
-                  <EpisodeCard
-                    episode={ep}
-                    flags={episodeFlags[ep.id] || []}
-                    onUpdated={loadData}
-                  />
-                </div>
+            {generating && <EpisodeCardSkeleton />}
+
+            {sortedEpisodes.length === 0 && !generating ? (
+              <div className="text-center py-20">
+                <p className="text-[var(--text-secondary)] text-lg mb-2">
+                  No episodes yet
+                </p>
+                <p className="text-[var(--text-tertiary)] text-sm">
+                  Generate above to write the first one
+                </p>
               </div>
-            ))}
+            ) : (
+              <div>
+                {sortedEpisodes.map((ep, i) => (
+                  <div key={ep.id}>
+                    {i > 0 && <div className="film-strip" />}
+                    <div className={ep.id === newEpisodeId ? 'episode-enter' : ''}>
+                      <EpisodeCard
+                        episode={ep}
+                        flags={episodeFlags[ep.id] || []}
+                        onUpdated={loadData}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </main>
+
+        {/* Chat panel */}
+        <aside className={`w-full lg:w-[400px] lg:border-l border-[var(--border-subtle)] lg:block ${mobileTab !== 'chat' ? 'hidden' : ''}`}>
+          <MemoryChat showId={showId} />
+        </aside>
+      </div>
     </div>
   );
 }

@@ -42,3 +42,11 @@ CREATE TABLE IF NOT EXISTS continuity_flags (
   description TEXT NOT NULL,
   severity TEXT DEFAULT 'medium'
 );
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id SERIAL PRIMARY KEY,
+  show_id INTEGER REFERENCES shows(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

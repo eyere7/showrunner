@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import showsRouter from './routes/shows';
 import episodesRouter from './routes/episodes';
+import chatRouter from './routes/chat';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/', showsRouter);
 app.use('/', episodesRouter);
+app.use('/', chatRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

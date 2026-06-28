@@ -139,3 +139,19 @@ export async function getFlags(episodeId: number) {
   if (!res.ok) throw new Error('Failed to fetch flags');
   return res.json();
 }
+
+export async function sendChatMessage(showId: number, message: string, conversationHistory: { role: string; content: string }[]) {
+  const res = await fetch(`${API}/shows/${showId}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, conversationHistory }),
+  });
+  if (!res.ok) throw new Error('Failed to send chat message');
+  return res.json();
+}
+
+export async function getChatHistory(showId: number) {
+  const res = await fetch(`${API}/shows/${showId}/chat/history`);
+  if (!res.ok) throw new Error('Failed to fetch chat history');
+  return res.json();
+}
